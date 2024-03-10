@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using UnityEngine;
 
 public struct MeshData
@@ -56,6 +57,8 @@ public class ScalarField
         GenerateFlat();
     }
 
+    public ScalarField(int nxy, float size) : this(nxy, nxy, size, size) {}
+
     public void GenerateFlat()
     {
         for(int i = 0; i < nx; i++)
@@ -63,7 +66,7 @@ public class ScalarField
             for(int j = 0; j < ny; j++)
             {
                 int index = i * nx + j;
-                meshData.vertices[index] = new Vector3(i / width, j / length, 0);
+                meshData.vertices[index] = new Vector3(i / width, 0, j / length);
                 meshData.uvs[index] = new Vector2(i / (float) nx, j / (float) ny);
 
                 if (i < nx - 1 && j < ny - 1)
