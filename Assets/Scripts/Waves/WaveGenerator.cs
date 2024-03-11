@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.GlobalIllumination;
 using static System.Runtime.InteropServices.Marshal;
 
 [Serializable]
@@ -22,6 +23,8 @@ public class WaveGenerator : MonoBehaviour
     public List<WaveParameter> waveParameters;
 
     public Shader waterShader;
+
+    public bool useSharpSine = false;
 
     private Material waterMaterial;
     private ComputeBuffer wavesBuffer;
@@ -45,6 +48,13 @@ public class WaveGenerator : MonoBehaviour
         
         waterMaterial.SetInt("numberOfWaves", waveParameters.Count);
         waterMaterial.SetBuffer("waves", wavesBuffer);
+        waterMaterial.SetVector("sun_dir", FindObjectOfType<Light>().transform.forward);
+
+        if (useSharpSine)
+            waterMaterial.EnableKeyword("SHARP_SINE");
+        else
+            waterMaterial.EnableKeyword("SINE");
+
         GetComponent<MeshRenderer>().material = waterMaterial;
     }
 
