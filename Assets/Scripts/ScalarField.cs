@@ -1,15 +1,15 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public struct MeshData
 {
     public Vector3[] vertices;
     public Vector2[] uvs;
     public List<int> triangles;
-
-
 
     public MeshData(int nx, int ny)
     {
@@ -28,6 +28,7 @@ public struct MeshData
     public Mesh CreateMesh()
     {
         Mesh m = new Mesh();
+        m.indexFormat = IndexFormat.UInt32;
         m.vertices = vertices;
         m.uv = uvs;
         m.triangles = triangles.ToArray();
