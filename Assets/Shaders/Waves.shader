@@ -32,36 +32,45 @@ Shader "Unlit/Waves"
             {
                 float4 pos : SV_POSITION;
                 float3 norm : TEXCOORD0;
+                float3 worldPos : TEXCOORD1;
             };
 
-            float SineWaveHeight(Wave w, float2 pos)
+            float SineWaveHeight(Wave w, float2 pos, float gain, float loss)
             {
-                return w.amplitude * sin(dot(w.direction, pos) * w.wavelength + _Time.y);
+                float amp = w.amplitude * loss;
+                float wl = w.wavelength * gain;
+                return amp * sin(dot(w.direction, pos) * wl + _Time.y);
             }
 
-            float3 SineWaveNorm(Wave w, float2 pos)
+            float3 SineWaveNorm(Wave w, float2 pos, float gain, float loss)
             {
+                float amp = w.amplitude * loss;
+                float wl = w.wavelength * gain;
                 return float3(
-                    float2(w.wavelength * w.direction.xy * w.amplitude * cos(dot(w.direction, pos) * w.wavelength + _Time.y)),
+                    float2(wl * w.direction.xy * amp * cos(dot(w.direction, pos) * wl + _Time.y)),
                     0
                 );
             }
 
-            float SharpSineWaveHeight(Wave w, float2 pos)
+            float SharpSineWaveHeight(Wave w, float2 pos, float gain, float loss)
             {
-                return 2.0f * w.amplitude * pow(
-                    (sin(dot(w.direction, pos) * w.wavelength + _Time.y) + 1.0f) / 2.0f, 
+                float amp = w.amplitude * loss;
+                float wl = w.wavelength * gain;
+                return 2.0f * amp * pow(
+                    (sin(dot(w.direction, pos) * wl + _Time.y) + 1.0f) / 2.0f, 
                     3.0f
                 );
             }
 
-            float3 SharpSineWaveNorm(Wave w, float2 pos)
+            float3 SharpSineWaveNorm(Wave w, float2 pos, float gain, float loss)
             {
+                float amp = w.amplitude * loss;
+                float wl = w.wavelength * gain;
                 return float3(
                     float2(
-                        3.0f * w.wavelength * w.direction.xy * w.amplitude * 
-                        pow(((sin(dot(w.direction, pos) * w.wavelength + _Time.y) + 1.0f) / 2.0f), 2.0f) * 
-                        cos(dot(w.direction, pos) * w.wavelength + _Time.y)
+                        3.0f * wl * w.direction.xy * amp * 
+                        pow(((sin(dot(w.direction, pos) * wl + _Time.y) + 1.0f) / 2.0f), 2.0f) * 
+                        cos(dot(w.direction, pos) * wl + _Time.y)
                         ),
                     0
                 );
@@ -74,21 +83,26 @@ Shader "Unlit/Waves"
                 // height of the wave
                 float1 totalHeight = 0.f;
                 float3 norm = float3(0, 0, 1);
+                float gain = 1;
+                float loss = 1;
                 for(int i = 0; i < numberOfWaves; i++)
                 {
                     #ifdef SINE
-                        totalHeight += SineWaveHeight(waves[i], vertex.xz),
-                        norm += SineWaveNorm(waves[i], vertex.xz);
+                        totalHeight += SineWaveHeight(waves[i], vertex.xz, gain, loss),
+                        norm += SineWaveNorm(waves[i], vertex.xz, gain, loss);
                     #endif
                     #ifdef SHARP_SINE
-                        totalHeight += SharpSineWaveHeight(waves[i], vertex.xz),
-                        norm += SharpSineWaveNorm(waves[i], vertex.xz);
+                        totalHeight += SharpSineWaveHeight(waves[i], vertex.xz, gain, loss),
+                        norm += SharpSineWaveNorm(waves[i], vertex.xz, gain, loss);
                     #endif
+                    gain *= 1.25;
+                    loss *= 0.75;
                 }
 
                 vertex += float4(0, totalHeight, 0, 0);
 
                 ret.pos = UnityObjectToClipPos(vertex);
+                ret.worldPos = mul(unity_ObjectToWorld, vertex);
                 ret.norm = norm;
 
                 return ret;
@@ -97,12 +111,24 @@ Shader "Unlit/Waves"
             // color from the material
             fixed4 _Color;
             float3 sun_dir; 
+            float4 sunColor;
+            float3 cameraPos;
+            float specularStrength;
 
             // pixel shader, no inputs needed
             fixed4 frag (v2f data) : SV_Target
             {
-                float1 cos_theta = dot(sun_dir, data.norm);
-                return half4(_Color.xyz * cos_theta, 1);
+                float3 norm = normalize(data.norm);
+                float3 light_dir = normalize(sun_dir);
+
+                float1 cos_theta = dot(light_dir, norm);
+                float3 diffuse = sunColor.xyz * cos_theta;
+
+                float3 viewDir = normalize(_WorldSpaceCameraPos - data.worldPos.xyz);
+                float3 reflectDir = reflect(light_dir, norm);
+                float3 spec = specularStrength * sunColor.xyz * pow(max(dot(viewDir, reflectDir), 0.0), 32);
+
+                return half4((diffuse + spec) * _Color, 1);
             }
             ENDCG
         }

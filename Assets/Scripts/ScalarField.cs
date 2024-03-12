@@ -62,12 +62,14 @@ public class ScalarField
 
     public void GenerateFlat()
     {
-        for(int i = 0; i < nx; i++)
+        float stepX = width / nx;
+        float stepY = length / ny;
+        for(int j = 0; j < ny; j++)
         {
-            for(int j = 0; j < ny; j++)
+            for(int i = 0; i < nx; i++)
             {
                 int index = i * nx + j;
-                meshData.vertices[index] = new Vector3(i / width, 0, j / length);
+                meshData.vertices[index] = new Vector3(i * stepX, 0, j * stepY);
                 meshData.uvs[index] = new Vector2(i / (float) nx, j / (float) ny);
 
                 if (i < nx - 1 && j < ny - 1)
