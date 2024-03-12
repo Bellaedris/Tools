@@ -32,6 +32,11 @@ public class WaveGenerator : MonoBehaviour
     public bool useRandomWaves;
     public int numberOfWaves = 4;
     public float mainDirAngle = 0;
+    public float minAmplitude = .5f;
+    public float maxAmplitude = 3.0f;
+    public float minWavelength = .1f;
+    public float maxWavelength = .3f;
+    public float angleAmplitude = 30f;
     public List<WaveParameter> waveParameters;
 
     public Shader waterShader;
@@ -53,9 +58,9 @@ public class WaveGenerator : MonoBehaviour
         for(int i = 0; i < numberOfWaves; i++)
         {
             waveParameters.Add(new WaveParameter(
-                UnityEngine.Random.Range(.5f, 3.0f),
-                UnityEngine.Random.Range(.1f, .3f),
-                UnityEngine.Random.Range(mainDirAngle - 30f, mainDirAngle + 30f)
+                UnityEngine.Random.Range(minAmplitude, maxAmplitude),
+                UnityEngine.Random.Range(minWavelength, maxWavelength),
+                UnityEngine.Random.Range(mainDirAngle - angleAmplitude, mainDirAngle + angleAmplitude)
             ));
         }
     }
