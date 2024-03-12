@@ -99,7 +99,7 @@ Shader "Unlit/Waves"
                     loss *= 0.75;
                 }
 
-                vertex += float4(0, totalHeight, 0, 0);
+                vertex -= float4(0, totalHeight, 0, 0);
 
                 ret.pos = UnityObjectToClipPos(vertex);
                 ret.worldPos = mul(unity_ObjectToWorld, vertex);
