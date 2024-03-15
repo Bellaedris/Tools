@@ -74,8 +74,8 @@ public class ScalarField
 
                 if (i < nx - 1 && j < ny - 1)
                 {
-                    meshData.AddTriangle(index, index + ny, index + ny + 1);
-                    meshData.AddTriangle(index, index + ny + 1, index + 1);
+                    meshData.AddTriangle(index,index + ny + 1, index + ny);
+                    meshData.AddTriangle(index, index + 1, index + ny + 1);
                 }
             }
         }
