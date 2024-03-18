@@ -9,12 +9,14 @@ public struct WaveParameter
 {
     public float amplitude;
     public float wavelength;
+    public float speed;
     public Vector2 direction;
 
-    public WaveParameter(float amp, float wl, float dir) 
+    public WaveParameter(float amp, float wl, float s, float dir) 
     {
         amplitude = amp;
         wavelength = wl;
+        speed = s;
         direction = new Vector2(Mathf.Cos(Mathf.Deg2Rad * dir), Mathf.Sin(Mathf.Deg2Rad * dir)).normalized;
     }
 }
@@ -29,6 +31,8 @@ public class WaveGenerator : MonoBehaviour
     public Color sunColor;
     public Color waterColor;
     public float specularStrength = .5f;
+    public int specularReflectance = 32;
+    public float fresnelStrength = 5.0f;
 
     public bool useRandomWaves;
     public int numberOfWaves = 4;
@@ -37,6 +41,8 @@ public class WaveGenerator : MonoBehaviour
     public float maxAmplitude = 3.0f;
     public float minWavelength = .1f;
     public float maxWavelength = .3f;
+    public float minSpeed = 1.0f;
+    public float maxSpeed = 5.0f;
     public float angleAmplitude = 30f;
     public List<WaveParameter> waveParameters;
 
@@ -51,7 +57,14 @@ public class WaveGenerator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        //update parameters
+        waterMaterial.SetVector("sunDir", -FindObjectOfType<Light>().transform.forward);
+        waterMaterial.SetFloat("specularStrength", specularStrength);
+        waterMaterial.SetFloat("specularReflectance", specularReflectance);
+        waterMaterial.SetFloat("fresnelStrength", fresnelStrength);
+
+        waterMaterial.SetColor("_Color", waterColor);
+        waterMaterial.SetColor("sunColor", sunColor);
     }
 
     void FillWaveParameters()
@@ -62,6 +75,7 @@ public class WaveGenerator : MonoBehaviour
             waveParameters.Add(new WaveParameter(
                 UnityEngine.Random.Range(minAmplitude, maxAmplitude),
                 UnityEngine.Random.Range(minWavelength, maxWavelength),
+                UnityEngine.Random.Range(minSpeed, maxSpeed),
                 UnityEngine.Random.Range(mainDirAngle - angleAmplitude, mainDirAngle + angleAmplitude)
             ));
         }
@@ -83,6 +97,8 @@ public class WaveGenerator : MonoBehaviour
         waterMaterial.SetVector("sunDir", -FindObjectOfType<Light>().transform.forward);
         waterMaterial.SetColor("sunColor", sunColor);
         waterMaterial.SetFloat("specularStrength", specularStrength);
+        waterMaterial.SetFloat("specularReflectance", specularReflectance);
+        waterMaterial.SetFloat("fresnelStrength", fresnelStrength);
         waterMaterial.SetTexture("environmentMap", environmentMap);
 
         waterMaterial.SetColor("_Color", waterColor);

@@ -23,6 +23,7 @@ Shader "Unlit/Waves"
             {
                 float1 amplitude;
                 float1 wavelength;
+                float1 speed;
                 float2 direction;
             };
             int numberOfWaves;
@@ -39,14 +40,14 @@ Shader "Unlit/Waves"
             {
                 float amp = w.amplitude * loss;
                 float wl = w.wavelength * gain;
-                return amp * sin(dot(w.direction, pos) * wl + _Time.y);
+                return amp * sin(dot(w.direction, pos) * wl + _Time.y * w.speed);
             }
 
             float3 SineWaveNorm(Wave w, float2 pos, float gain, float loss)
             {
                 float amp = w.amplitude * loss;
                 float wl = w.wavelength * gain;
-                float2 norm = float2(wl * w.direction.xy * amp * cos(dot(w.direction, pos) * wl + _Time.y));
+                float2 norm = float2(wl * w.direction.xy * amp * cos(dot(w.direction, pos) * wl + _Time.y * w.speed));
                 return float3(norm.x, 0, norm.y);
             }
 
@@ -55,7 +56,7 @@ Shader "Unlit/Waves"
                 float amp = w.amplitude * loss;
                 float wl = w.wavelength * gain;
                 return 2.0f * amp * pow(
-                    (sin(dot(w.direction, pos) * wl + _Time.y) + 1.0f) / 2.0f, 
+                    (sin(dot(w.direction, pos) * wl + _Time.y * w.speed) + 1.0f) / 2.0f, 
                     3.0f
                 );
             }
@@ -67,8 +68,8 @@ Shader "Unlit/Waves"
                 
                 float2 norm = float2(
                     3.0f * wl * w.direction.xy * amp * 
-                    pow(((sin(dot(w.direction, pos) * wl + _Time.y) + 1.0f) / 2.0f), 2.0f) * 
-                    cos(dot(w.direction, pos) * wl + _Time.y)
+                    pow(((sin(dot(w.direction, pos) * wl + _Time.y * w.speed) + 1.0f) / 2.0f), 2.0f) * 
+                    cos(dot(w.direction, pos) * wl + _Time.y * w.speed)
                 );
                 return float3(norm.x, 0, norm.y);
             }
@@ -111,6 +112,8 @@ Shader "Unlit/Waves"
             float4 sunColor;
             float3 cameraPos;
             float specularStrength;
+            float specularReflectance;
+            float fresnelStrength;
 
             samplerCUBE environmentMap;
 
@@ -119,19 +122,24 @@ Shader "Unlit/Waves"
             {
                 float3 norm = normalize(data.norm);
                 float3 light_dir = normalize(sunDir);
+                float3 viewDir = normalize(_WorldSpaceCameraPos - data.worldPos.xyz);
 
                 // diffuse
                 float1 cos_theta = dot(light_dir, norm);
                 float3 diffuse = sunColor.xyz * cos_theta;
 
+                // Schlick Fresnel
+                float3 f0 = float3(0.02, 0.02, 0.02);
+                float3 fresnel = f0 + (1.0 - f0) * pow(1.0 - dot(viewDir, norm), fresnelStrength);
+
                 // specular
-                float3 viewDir = normalize(_WorldSpaceCameraPos - data.worldPos.xyz);
                 float3 reflectDir = reflect(-light_dir, norm);
-                float3 spec = specularStrength * sunColor.xyz * pow(max(dot(viewDir, reflectDir), 0.0), 32);
+                float3 spec = specularStrength * sunColor.xyz * pow(max(dot(viewDir, reflectDir), 0.0), specularReflectance) * fresnel;
 
                 //environment mapping
                 float3 viewReflectDir = reflect(-viewDir, norm);
-                float3 environmentReflection = texCUBE(environmentMap, viewReflectDir).rgb;
+                float3 environmentReflection = texCUBE(environmentMap, viewReflectDir).rgb * fresnel;
+                
 
                 return half4((diffuse + spec + environmentReflection) * _Color, 1);
             }
