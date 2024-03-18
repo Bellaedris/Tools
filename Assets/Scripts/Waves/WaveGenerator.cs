@@ -27,6 +27,7 @@ public class WaveGenerator : MonoBehaviour
     public int oceanResolution = 256;
 
     public Color sunColor;
+    public Color waterColor;
     public float specularStrength = .5f;
 
     public bool useRandomWaves;
@@ -40,6 +41,7 @@ public class WaveGenerator : MonoBehaviour
     public List<WaveParameter> waveParameters;
 
     public Shader waterShader;
+    public Texture environmentMap;
 
     public bool useSharpSine = false;
 
@@ -78,9 +80,12 @@ public class WaveGenerator : MonoBehaviour
         
         waterMaterial.SetInt("numberOfWaves", waveParameters.Count);
         waterMaterial.SetBuffer("waves", wavesBuffer);
-        waterMaterial.SetVector("sun_dir", FindObjectOfType<Light>().transform.forward);
+        waterMaterial.SetVector("sunDir", -FindObjectOfType<Light>().transform.forward);
         waterMaterial.SetColor("sunColor", sunColor);
         waterMaterial.SetFloat("specularStrength", specularStrength);
+        waterMaterial.SetTexture("environmentMap", environmentMap);
+
+        waterMaterial.SetColor("_Color", waterColor);
 
         if (useSharpSine)
             waterMaterial.EnableKeyword("SHARP_SINE");
